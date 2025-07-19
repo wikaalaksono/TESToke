@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>QRIS Dinamis Generator</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
   <style>
     body {
       font-family: monospace;
@@ -24,12 +24,8 @@
       text-align: center;
     }
     @media print {
-      body {
-        margin: 0;
-      }
-      button, input {
-        display: none;
-      }
+      body { margin: 0; }
+      button, input { display: none; }
     }
   </style>
 </head>
@@ -45,7 +41,7 @@
 
   <div class="struk" id="struk">
     <div class="center">
-      <strong>TOKO ABC</strong><br>
+      <strong>TOKO oke</strong><br>
       Jl. Contoh No.1, Jakarta<br>
       -------------------------<br>
       <div id="datetime"></div>
@@ -58,7 +54,6 @@
   </div>
 
   <script>
-    // Fungsi CRC-16 (untuk validasi tag 63 QRIS)
     function crc16(str) {
       let crc = 0xFFFF;
       for (let i = 0; i < str.length; i++) {
@@ -70,9 +65,8 @@
       return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
     }
 
-    // Generate QR dan cetak
     function generateQR() {
-      const merchantID = 'ID1025417574601'; // Ubah ke MID kamu
+      const merchantID = 'ID1025417574601';
       const amountRaw = document.getElementById('amountInput').value;
 
       if (!amountRaw || isNaN(amountRaw)) {
@@ -80,43 +74,38 @@
         return;
       }
 
-      const amount = parseFloat(amountRaw).toFixed(2); // Format desimal
+      const amount = parseFloat(amountRaw).toFixed(2);
       const nominalTag = `54${amount.length.toString().padStart(2, '0')}${amount}`;
 
-      // Template QR dasar sesuai EMVCo + BI
       let qrData =
-        '000201' + // Payload Format Indicator
-        '010212' + // Dynamic QR
-        '26380016' + merchantID + // Merchant ID
-        '5303360' + // Currency IDR
-        nominalTag + // Nominal
-        '5802ID' + // Country Code
-        '5908TOKO ABC' + // Nama Merchant
-        '6008JAKARTA' + // Kota
-        '62100507ABCD12'; // Additional Data
+        '000201' +
+        '010212' +
+        '26380016' + merchantID +
+        '5303360' +
+        nominalTag +
+        '5802ID' +
+        '5908TOKO ABC' +
+        '6008JAKARTA' +
+        '62100507ABCD12';
 
-      const qrWithCRCHeader = qrData + '6304'; // Tambahkan tag 63 untuk CRC
-      const crc = crc16(qrWithCRCHeader);
-      const qrFinal = qrWithCRCHeader + crc;
+      const qrWithCRC = qrData + '6304';
+      const crc = crc16(qrWithCRC);
+      const qrFinal = qrWithCRC + crc;
 
-      // Tampilkan ke layar
       document.getElementById("amountDisplay").innerHTML =
         `<strong>Rp ${parseInt(amount).toLocaleString("id-ID")}</strong>`;
       document.getElementById("datetime").innerText =
         new Date().toLocaleString("id-ID");
 
-      // Render QR ke canvas
-      QRCode.toCanvas(document.getElementById('qrisCanvas'), qrFinal)
-        .then(() => {
-          console.log("QRIS berhasil dibuat:", qrFinal);
-          window.print();
-        })
-        .catch(err => {
-          console.error("Gagal membuat QR:", err);
-        });
+      const qr = new QRious({
+        element: document.getElementById('qrisCanvas'),
+        value: qrFinal,
+        size: 200
+      });
+
+      window.print();
     }
 
-    // Pasang tombol click
     document.getElementById("generateBtn").addEventListener("click", generateQR);
   </script>
 
